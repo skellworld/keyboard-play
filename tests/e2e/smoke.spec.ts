@@ -2,10 +2,12 @@ import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: '시작하기' }).click();
+  await expect(page.locator('.start-screen')).toBeHidden();
 });
 
 test('앱 제목과 부모 안내 문구가 있다', async ({ page }) => {
-  await expect(page.getByRole('heading', { name: '키보드 놀이' })).toHaveCount(1);
+  await expect(page.getByRole('heading', { level: 1, name: '키보드 놀이' })).toHaveCount(1);
   await expect(page.locator('.parent-hint')).toContainText('Ctrl + Alt + P');
 });
 

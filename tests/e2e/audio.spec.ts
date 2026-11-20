@@ -40,6 +40,7 @@ test.beforeEach(async ({ page }) => {
     };
   });
   await page.goto('/');
+  await page.getByRole('button', { name: '시작하기' }).click();
 });
 
 test('키를 누르면 효과음이 나고 글자 이름을 읽어 준다', async ({ page }) => {

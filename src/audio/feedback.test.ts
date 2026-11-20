@@ -10,7 +10,7 @@ const R_AND_G: readonly GlyphItem[] = [
 
 function setup(settings: Partial<Settings> = {}) {
   const sfx = { play: vi.fn(), unlock: vi.fn(), dispose: vi.fn() };
-  const speaker = { speak: vi.fn(), hasVoice: () => true, dispose: vi.fn() };
+  const speaker = { speak: vi.fn(), stop: vi.fn(), hasVoice: () => true, dispose: vi.fn() };
   const feedback = createFeedback(sfx, speaker, () => ({ ...DEFAULT_SETTINGS, ...settings }));
   return { sfx, speaker, feedback };
 }
@@ -63,6 +63,18 @@ describe('createFeedback', () => {
     const off = setup({ soundOn: false });
     off.feedback.unlock();
     expect(off.sfx.unlock).not.toHaveBeenCalled();
+  });
+
+  it('reports whether a Korean voice exists', () => {
+    expect(setup().feedback.hasVoice()).toBe(true);
+  });
+
+  it('silences speech right away (speech turned off, page hidden)', () => {
+    const { speaker, feedback } = setup();
+
+    feedback.silence();
+
+    expect(speaker.stop).toHaveBeenCalled();
   });
 
   it('disposes both the sound effects and the speaker', () => {

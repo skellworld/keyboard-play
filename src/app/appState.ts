@@ -30,6 +30,7 @@ export type AppState =
 
 export type AppEvent =
   | { readonly type: 'START' }
+  | { readonly type: 'OPEN_MENU' }
   | { readonly type: 'FULLSCREEN_LOST' }
   | { readonly type: 'RESUME' }
   | { readonly type: 'EXIT_HOLD_COMPLETED'; readonly now: number }
@@ -47,6 +48,8 @@ export function reduceApp(state: AppState, event: AppEvent): AppState {
   switch (event.type) {
     case 'START':
       return state.screen === 'start' || state.screen === 'parentMenu' ? PLAYING : state;
+    case 'OPEN_MENU':
+      return state.screen === 'start' ? PARENT_MENU : state;
     case 'RESUME':
       return state.screen === 'paused' ? PLAYING : state;
     case 'FULLSCREEN_LOST':

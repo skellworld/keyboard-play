@@ -103,6 +103,16 @@ describe('reduceApp', () => {
     expect(state).toEqual({ screen: 'paused' });
   });
 
+  it('opens the parent menu from the start screen', () => {
+    expect(run([{ type: 'OPEN_MENU' }])).toEqual({ screen: 'parentMenu' });
+  });
+
+  it('opens the parent menu only from the start screen', () => {
+    const playing: AppState = { screen: 'playing' };
+
+    expect(reduceApp(playing, { type: 'OPEN_MENU' })).toBe(playing);
+  });
+
   it('restarts play from the parent menu', () => {
     const state = run([
       { type: 'START' },

@@ -1,0 +1,362 @@
+/* 시작 화면 · 일시정지 · 나가기 확인 · 진행 링 · 부모 메뉴 */
+
+:root {
+  --color-panel: #fffdf9;
+  --color-ink-soft: rgb(59 47 42 / 0.68);
+  --color-primary: #ff7a2f;
+  --color-primary-top: #ff9a52;
+  --color-primary-deep: #e0601c;
+  --color-danger: #ff5a5f;
+  --color-danger-deep: #d9363b;
+  --color-focus: #2f80ed;
+  --color-scrim: rgb(59 47 42 / 0.35);
+  --color-warning-ink: #b23c17;
+  --color-warning-bg: #ffe8dd;
+  --shadow-soft: 0 18px 40px rgb(120 70 30 / 0.16);
+  --shadow-card: 0 2px 12px rgb(120 70 30 / 0.08);
+}
+
+/* hidden 속성이 display 지정보다 항상 이기도록 */
+[hidden] {
+  display: none !important;
+}
+
+button {
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 4px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+/* 크고 통통한 주 버튼 (시작하기, 다시 놀기) */
+.start-screen__start,
+.parent-menu__play {
+  padding: 0.7em 2.2em;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--color-primary-top), var(--color-primary));
+  color: #fff;
+  font-size: clamp(24px, 4.5vmin, 36px);
+  font-weight: 800;
+  line-height: 1;
+  box-shadow:
+    0 6px 0 var(--color-primary-deep),
+    var(--shadow-soft);
+  transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out;
+}
+
+.start-screen__start:active,
+.parent-menu__play:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 2px 0 var(--color-primary-deep),
+    var(--shadow-soft);
+}
+
+/* ---------- 시작 화면 ---------- */
+
+.start-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  /* 낮은 가로 화면에서도 시작 버튼이 잘리지 않고 스크롤되게 */
+  place-content: safe center;
+  justify-items: center;
+  gap: clamp(18px, 3.5vh, 32px);
+  overflow-y: auto;
+  padding: max(64px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  background: rgb(255 244 230 / 0.97);
+  text-align: center;
+  touch-action: pan-y;
+}
+
+.start-screen__hero {
+  display: grid;
+  gap: 6px;
+}
+
+.start-screen__emoji {
+  margin: 0;
+  font-size: clamp(40px, 8vmin, 72px);
+  letter-spacing: 0.15em;
+}
+
+.start-screen__title {
+  margin: 0;
+  color: var(--sprite-c0);
+  font-family: var(--font-ui);
+  font-size: clamp(44px, 10vmin, 96px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-shadow: 0 4px 0 rgb(255 255 255 / 0.9);
+}
+
+.start-screen__lead {
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-family: var(--font-ui);
+  font-size: clamp(16px, 2.4vmin, 20px);
+}
+
+.start-screen__guide {
+  max-width: 560px;
+  padding: 16px 20px;
+  border-radius: 20px;
+  background: var(--color-panel);
+  box-shadow: var(--shadow-card);
+  color: var(--color-ink-soft);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  text-align: left;
+}
+
+.start-screen__guide-title {
+  margin: 0 0 6px;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.start-screen__guide-list {
+  margin: 0;
+  padding-left: 1.2em;
+  line-height: 1.6;
+}
+
+/* 오른쪽 위는 나가기 모서리라서 설정 버튼은 왼쪽 위에 */
+.start-screen__menu {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  left: 16px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid rgb(59 47 42 / 0.12);
+  border-radius: 999px;
+  background: var(--color-panel);
+  color: var(--color-text);
+  font-size: 15px;
+}
+
+/* ---------- 일시정지 ---------- */
+
+.pause-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  width: 100%;
+  border: 0;
+  background: rgb(255 244 230 / 0.93);
+  color: var(--color-text);
+}
+
+.pause-overlay__title {
+  font-size: clamp(32px, 7vmin, 64px);
+  font-weight: 800;
+}
+
+.pause-overlay__hint {
+  color: var(--color-ink-soft);
+  font-size: clamp(16px, 2.6vmin, 22px);
+}
+
+/* ---------- 나가기 확인 ---------- */
+
+.exit-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--color-scrim);
+}
+
+.exit-confirm__panel {
+  position: absolute;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  width: 300px; /* exitConfirm.ts CONFIRM_PANEL_SIZE */
+  height: 180px;
+  padding: 18px;
+  border-radius: 24px;
+  background: var(--color-panel);
+  box-shadow: var(--shadow-soft);
+  font-family: var(--font-ui);
+  text-align: center;
+}
+
+.exit-confirm__title {
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-weight: 700;
+}
+
+.exit-confirm__button {
+  padding: 14px 44px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+  box-shadow: 0 5px 0 var(--color-danger-deep);
+}
+
+.exit-confirm__hint {
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-size: 13px;
+}
+
+/* ---------- 나가기 진행 링 (오른쪽 위) ---------- */
+
+.hold-ring {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 30;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--color-primary) calc(var(--progress, 0) * 1turn),
+    rgb(59 47 42 / 0.12) 0
+  );
+  -webkit-mask: radial-gradient(circle, transparent 54%, #000 55%);
+  mask: radial-gradient(circle, transparent 54%, #000 55%);
+  pointer-events: none;
+}
+
+/* ---------- 부모 메뉴 ---------- */
+
+.parent-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  overflow-y: auto;
+  padding: max(24px, env(safe-area-inset-top)) 16px 40px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  /* 놀이 화면과 달리 메뉴는 스크롤·글자 선택이 되어야 한다 */
+  touch-action: pan-y;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.parent-menu > * {
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.parent-menu__title {
+  margin-block: 0 16px;
+  font-size: 28px;
+}
+
+.parent-menu__form {
+  display: grid;
+  gap: 12px;
+}
+
+.parent-menu__group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--color-panel);
+  box-shadow: var(--shadow-card);
+}
+
+.parent-menu__group legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 0;
+  font-weight: 700;
+}
+
+.parent-menu__choice,
+.parent-menu__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 17px;
+}
+
+.parent-menu input[type='radio'],
+.parent-menu input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--color-primary);
+}
+
+.parent-menu__volume {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  font-size: 17px;
+}
+
+.parent-menu__volume input {
+  flex: 1;
+  accent-color: var(--color-primary);
+}
+
+.parent-menu__save-warning {
+  margin-block: 12px 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-ink);
+}
+
+.parent-menu__subtitle {
+  margin-block: 24px 8px;
+  font-size: 16px;
+}
+
+.parent-menu__status {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  margin-block: 0;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--color-panel);
+  box-shadow: var(--shadow-card);
+}
+
+.parent-menu__status dt {
+  color: var(--color-ink-soft);
+}
+
+.parent-menu__status dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.parent-menu__play {
+  display: block;
+  margin-block: 28px 14px;
+}
+
+.parent-menu__finish {
+  color: var(--color-ink-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}

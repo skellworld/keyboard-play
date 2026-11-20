@@ -164,6 +164,19 @@ describe('createSpeaker', () => {
     expect(listeners.size).toBe(0);
   });
 
+  it('stops the current and pending speech on stop', () => {
+    const { synth } = fakeSynth([voice('Heami', 'ko-KR')]);
+    const speaker = speakerFor(synth);
+    synth.speaking = true;
+    speaker.speak('기역', 1);
+
+    speaker.stop();
+    vi.advanceTimersByTime(RESTART_DELAY_MS);
+
+    expect(synth.cancel).toHaveBeenCalledTimes(2);
+    expect(synth.speak).not.toHaveBeenCalled();
+  });
+
   it('does nothing when speech is not supported', () => {
     const speaker = createSpeaker(null, makeUtterance);
 

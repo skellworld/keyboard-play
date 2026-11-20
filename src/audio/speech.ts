@@ -33,6 +33,8 @@ export interface Speaker {
   speak(text: string, volume: number): void;
   /** 한국어 음성이 목록에 있는지 (부모 메뉴 표시용) */
   hasVoice(): boolean;
+  /** 지금 읽는 것과 기다리는 것을 바로 멈춘다 (읽어주기 끔, 화면 숨김). */
+  stop(): void;
   dispose(): void;
 }
 
@@ -150,17 +152,17 @@ export function createSpeaker(
         speakNow(text, volume);
       }, RESTART_DELAY_MS);
     },
-    dispose() {
+    stop() {
       clearRestart();
-      if (!synth) {
-        return;
-      }
-      synth.removeEventListener?.('voiceschanged', refreshVoice);
       try {
-        synth.cancel();
+        synth?.cancel();
       } catch {
-        // 정리 중 실패는 무시한다.
+        // 멈추기 실패는 무시한다.
       }
+    },
+    dispose() {
+      this.stop();
+      synth?.removeEventListener?.('voiceschanged', refreshVoice);
     },
   };
 }

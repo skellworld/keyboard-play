@@ -1,6 +1,7 @@
 import './styles/fonts.css';
 import './styles/global.css';
 import './styles/play.css';
+import './styles/screens.css';
 import { mountApp } from './app/mountApp';
 
 /** 글꼴은 글자별로 나눠 필요할 때 받는다. 첫 글자 크기를 잴 때 대체 글꼴로 재지 않도록 미리 받아 둔다. */

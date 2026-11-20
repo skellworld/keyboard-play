@@ -8,12 +8,16 @@ export interface Feedback {
   glyph(items: readonly GlyphItem[]): void;
   burst(): void;
   unlock(): void;
+  /** 읽어주기를 바로 멈춘다 (읽어주기 끔, 화면 숨김). */
+  silence(): void;
+  /** 한국어 음성이 있는지 (부모 메뉴 표시용) */
+  hasVoice(): boolean;
   dispose(): void;
 }
 
 export function createFeedback(
   sfx: Sfx,
-  speaker: Pick<Speaker, 'speak' | 'dispose'>,
+  speaker: Pick<Speaker, 'speak' | 'stop' | 'hasVoice' | 'dispose'>,
   getSettings: () => Settings,
 ): Feedback {
   return {
@@ -41,6 +45,12 @@ export function createFeedback(
       if (getSettings().soundOn) {
         sfx.unlock();
       }
+    },
+    silence() {
+      speaker.stop();
+    },
+    hasVoice() {
+      return speaker.hasVoice();
     },
     dispose() {
       sfx.dispose();
