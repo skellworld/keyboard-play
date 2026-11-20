@@ -1,12 +1,13 @@
 import { createFeedback, type Feedback } from '../audio/feedback';
 import { createSfx } from '../audio/sfx';
 import { createSpeaker } from '../audio/speech';
+import { createClipPlayer, createClipSpeaker } from '../audio/voiceClips';
 import type { KeyTransition } from '../input/holdDetector';
 import { armHistoryTrap, installGuards } from '../lock/guards';
 import { createScreenLock, type LockStatus, type ScreenLock } from '../lock/screenLock';
 import { createStage } from '../render/stage';
 import { createLiveSettings } from '../settings/liveSettings';
-import { getSafeStorage } from '../settings/settingsStore';
+import { getSafeStorage, type Settings } from '../settings/settingsStore';
 import { createExitConfirm } from '../ui/exitConfirm';
 import { createExitCornerMarker, createParentHint } from '../ui/hint';
 import { createHoldRing } from '../ui/holdRing';
@@ -49,6 +50,12 @@ function createTitle(): HTMLElement {
   return title;
 }
 
+/** 효과음 + MeloTTS 음성 파일(없으면 기기 내장 음성으로 대신) */
+function createDefaultFeedback(getSettings: () => Settings): Feedback {
+  const clips = createClipPlayer({ baseUrl: `${import.meta.env.BASE_URL}voice/` });
+  return createFeedback(createSfx(), createClipSpeaker(clips, createSpeaker()), getSettings);
+}
+
 function windowViewport() {
   return { width: window.innerWidth, height: window.innerHeight };
 }
@@ -82,7 +89,7 @@ export function mountApp(root: HTMLElement, options: MountOptions = {}): () => v
   const settings = createLiveSettings(
     options.storage === undefined ? getSafeStorage() : options.storage,
   );
-  const feedback = options.feedback ?? createFeedback(createSfx(), createSpeaker(), settings.get);
+  const feedback = options.feedback ?? createDefaultFeedback(settings.get);
   const screenLock = options.screenLock ?? createScreenLock();
   const stage = createStage({ random, viewport: windowViewport });
   const controller = createPlayController({

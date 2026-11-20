@@ -114,6 +114,15 @@ kids-keyboard/
 6. **시계 통일**: `acceptInput`·`updateHold`·`reduceApp`의 `now`는 모두 `performance.now()`.
 7. **`localStorage`는 `getSafeStorage()`로만 접근.**
 
+#### 음성: MeloTTS 음성 파일로 교체 (2026-11-21, 사용자 요청)
+- MeloTTS(MIT, KR)는 PC 전용 Python 엔진 → **고정된 64개 문장을 미리 만들어** `public/voice/*.ogg`(Opus 24kHz, 약 300KB)로 앱에 포함, 오프라인 저장
+- 목록은 `glyphs.ts`가 단일 출처: `npm run voice:texts` → `tools/tts/texts.json` → `tools/tts/generate_voice.py`
+- 재생: `voiceClips.ts` (Web Audio, 최신 것만 재생, 파일 실패 시 기기 음성으로 대신). 환경 만드는 법과 Windows 문제 해결은 [tools/tts/README.md](../tools/tts/README.md)
+- lint 대상을 프로젝트 코드 폴더로 한정 (tools/tts/.venv 안의 외부 JS 제외 — ESLint 설정 수정은 ECC 훅이 막음)
+
+#### 6단계 완료 (2026-11-21)
+- 배포됨: https://skellworld.github.io/keyboard-play/ (저장소 skellworld/keyboard-play, push하면 자동 배포)
+
 #### 6단계 진행 (2026-11-21)
 - PWA: vite-plugin-pwa(서비스 워커·manifest, `display: fullscreen`), 앱 전체 29개 파일(463KB, 글꼴 포함) 미리 저장 → 오프라인 실행 E2E로 확인
 - 새 버전은 다음 실행 때 적용 (놀이 도중 새로고침되어 전체화면이 풀리지 않게)

@@ -110,3 +110,16 @@ function digitInfo(char: string): GlyphInfo {
   const value = Number(char);
   return { speech, emoji: value === 0 ? EGG : CHICK.repeat(value) };
 }
+
+/**
+ * 읽어주기에 쓰이는 모든 문장 (중복 없이: 숫자 → 영문 → 자모 순).
+ * MeloTTS 음성 파일을 만들 목록이다 (scripts/export-speech-texts.mjs가 읽는다).
+ */
+export function allSpeechTexts(): readonly string[] {
+  const texts = [
+    ...DIGIT_SPEECH,
+    ...Object.values(LATIN_INFO).map((info) => info.speech),
+    ...Object.values(JAMO_INFO).map((info) => info.speech),
+  ];
+  return [...new Set(texts)];
+}

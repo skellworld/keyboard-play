@@ -20,6 +20,11 @@ npm run build
 npm run icons      # 앱 아이콘 다시 만들기 (scripts/generate-icons.mjs)
 ```
 
+## 음성
+
+글자 이름은 [MeloTTS](https://github.com/myshell-ai/MeloTTS)로 미리 만든 `public/voice/*.ogg`를 재생한다.
+읽는 말을 바꾸면 [tools/tts/README.md](tools/tts/README.md)대로 다시 만든다.
+
 ## 배포 (GitHub Pages)
 
 `main` 브랜치에 push하면 [deploy.yml](.github/workflows/deploy.yml)이 검사 → E2E → 빌드 → 배포를 한다.

@@ -9,3 +9,13 @@ test-results/
 
 # 스파이크 측정 원본: 기기 정보(userAgent 등)가 들어 있어 커밋하지 않는다.
 spike/results/
+
+# MeloTTS 음성 생성용 Python 환경 (PC에서만 쓰는 도구, 용량 큼)
+tools/tts/.venv/
+tools/tts/.uv-tool/
+tools/tts/.uv-cache/
+tools/tts/.python/
+tools/tts/.mecab-ko/
+tools/tts/out/
+public/voice/*.part.ogg
+__pycache__/

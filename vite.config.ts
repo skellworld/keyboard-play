@@ -42,8 +42,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // 앱 전체(글꼴 14개 포함)를 처음 열 때 저장해 두고 오프라인에서 쓴다.
-        globPatterns: ['**/*.{js,css,html,woff2,svg,png}'],
+        // 앱 전체(글꼴 14개, MeloTTS 음성 64개 포함)를 처음 열 때 저장해 두고 오프라인에서 쓴다.
+        globPatterns: ['**/*.{js,css,html,woff2,svg,png,ogg}'],
         cleanupOutdatedCaches: true,
       },
     }),
