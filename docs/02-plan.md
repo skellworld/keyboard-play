@@ -103,6 +103,16 @@ kids-keyboard/
 | `appState.ts` | 상태 전이: 시작→놀이, 놀이→나가기확인(3초)→부모메뉴, 확인 5초 초과→놀이, 전체화면 이탈→일시정지 |
 
 - **검증**: `npm test -- --coverage` → 핵심 로직 커버리지 90% 이상 목표 (전체 80% 이상)
+- ✅ **완료 (2026-11-21)**: 테스트 172개, 줄 커버리지 99%. 코드 리뷰(HIGH 2·MEDIUM 일부) 반영 — 놓친 Ctrl/Alt keyup 자동 보정, 나가기 확인의 5초 제한을 확인 시점에도 적용, 모서리 판정 경계, `getSafeStorage`, 잘못된 상한값 방어
+
+#### 3·5단계에서 지킬 통합 규칙 (2단계 코드 리뷰에서 나옴)
+1. **키 이벤트 처리 순서**: ① 눌린 키 추적(`updatePressedKeys`)과 나가기 판정(`updateHold`)은 **모든 원시 이벤트**에 먼저 → ② `mapKey` → ③ `acceptInput`은 결과가 `glyphs`/`decor`일 때만. (수식키가 초당 상한을 잡아먹거나, 상한에 걸린 키가 나가기 판정에서 빠지는 것 방지)
+2. **나가기 상태는 하나로**: `HoldState` 하나에 `active = 키 조합 || 모서리 터치`. 두 입력이 서로를 리셋하지 않게.
+3. **모서리 터치는 손가락별로 추적**: `pointerId → 모서리 안인지` 맵을 두고 `active = 하나라도 모서리 안`. `pointercancel`·`lostpointercapture`도 손 뗀 것으로 처리.
+4. **초기화 시점**: `blur`, `visibilitychange`(hidden), `fullscreenchange`(해제) 때 눌린 키를 `NO_KEYS`, 나가기 상태를 `HOLD_IDLE`로.
+5. **`preventDefault`는 `ignore`여도 항상** (잠금 중). `mapKey`가 무시하는 Ctrl/Alt 조합이 브라우저 단축키로 새지 않게.
+6. **시계 통일**: `acceptInput`·`updateHold`·`reduceApp`의 `now`는 모두 `performance.now()`.
+7. **`localStorage`는 `getSafeStorage()`로만 접근.**
 
 ### 3단계 — 화면과 놀이
 - `stage.ts`: 글자 + 이모지 스프라이트, 랜덤 위치·색, 튀어나옴 → 몇 초 뒤 사라짐, 30개 초과 시 가장 오래된 것 빠르게 제거
