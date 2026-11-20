@@ -1,0 +1,223 @@
+:root {
+  /* 크림색 바탕에서 또렷한 밝은 색 (노랑은 대비가 낮아 제외) */
+  --sprite-c0: #ff5a5f;
+  --sprite-c1: #ff8a00;
+  --sprite-c2: #1f9d55;
+  --sprite-c3: #2f80ed;
+  --sprite-c4: #8e44ad;
+  --sprite-c5: #e84393;
+  --sprite-c6: #0f9d9a;
+
+  --color-hint: rgb(59 47 42 / 0.25);
+  --color-corner: rgb(59 47 42 / 0.07);
+
+  --duration-pop: 450ms;
+  --duration-life: 3000ms; /* stage.ts GLYPH_LIFETIME_MS(3100)보다 조금 짧게 */
+  --duration-burst: 900ms; /* stage.ts BURST_LIFETIME_MS보다 짧게 */
+  --duration-leave: 250ms; /* stage.ts SPRITE_LEAVE_MS */
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-fly: cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+/* ---------- 놀이판 ---------- */
+
+.stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.sprite {
+  position: absolute;
+  width: max-content; /* 화면 가장자리에서도 줄어들거나 줄바꿈되지 않게 */
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: opacity var(--duration-leave) ease-in;
+}
+
+.sprite--leaving {
+  opacity: 0;
+}
+
+.sprite--c0 {
+  --sprite-color: var(--sprite-c0);
+}
+.sprite--c1 {
+  --sprite-color: var(--sprite-c1);
+}
+.sprite--c2 {
+  --sprite-color: var(--sprite-c2);
+}
+.sprite--c3 {
+  --sprite-color: var(--sprite-c3);
+}
+.sprite--c4 {
+  --sprite-color: var(--sprite-c4);
+}
+.sprite--c5 {
+  --sprite-color: var(--sprite-c5);
+}
+.sprite--c6 {
+  --sprite-color: var(--sprite-c6);
+}
+
+/* ---------- 글자 스프라이트 ---------- */
+
+.sprite--glyph .sprite__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: var(--glyph-size, 160px);
+  color: var(--sprite-color, var(--sprite-c0));
+  animation: sprite-life var(--duration-life) linear forwards;
+}
+
+.sprite__glyphs {
+  display: flex;
+  gap: 0.15em;
+  line-height: 1;
+  font-family: var(--font-display);
+  /* 흰 윤곽 + 부드러운 그림자로 바탕에서 살짝 떠 보이게 */
+  text-shadow:
+    0 0.035em 0 rgb(255 255 255 / 0.95),
+    0 0.08em 0.14em rgb(59 47 42 / 0.2);
+}
+
+.sprite__char {
+  display: inline-block;
+  animation: char-pop var(--duration-pop) var(--ease-pop) both;
+}
+
+.sprite__char + .sprite__char {
+  animation-delay: 60ms;
+}
+
+.sprite__emoji {
+  font-size: 0.42em;
+  line-height: 1.25;
+  white-space: nowrap;
+  animation: char-pop var(--duration-pop) var(--ease-pop) 90ms both;
+}
+
+/* 숫자 4~9의 병아리: 작게, 한 줄에 5마리씩 */
+.sprite__emoji--many {
+  max-width: 5.3em;
+  font-size: 0.24em;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+}
+
+@keyframes char-pop {
+  from {
+    transform: scale(0.2) rotate(-10deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* 천천히 떠오르다가 마지막 0.6초 동안 서서히 사라짐 (깜빡임 없음) */
+@keyframes sprite-life {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-6vh);
+    opacity: 0;
+  }
+}
+
+/* ---------- 별·하트 효과 ---------- */
+
+.sprite--burst {
+  width: 0;
+  height: 0;
+}
+
+.burst__particle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: clamp(28px, 6vmin, 56px);
+  line-height: 1;
+  animation: particle-fly var(--duration-burst) var(--ease-fly) forwards;
+}
+
+@keyframes particle-fly {
+  from {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(0)
+      rotate(calc(-1 * var(--angle))) scale(0.3);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateX(var(--distance))
+      rotate(calc(-1 * var(--angle))) scale(1);
+    opacity: 0;
+  }
+}
+
+/* ---------- 부모 안내 ---------- */
+
+.parent-hint {
+  position: fixed;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 0; /* 글자 뒤에 깔림 */
+  width: min(90vw, 720px);
+  margin: 0;
+  transform: translateX(-50%);
+  color: var(--color-hint);
+  font-family: var(--font-ui);
+  font-size: clamp(13px, 1.9vmin, 17px);
+  text-align: center;
+  pointer-events: none;
+}
+
+.exit-corner {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 0;
+  width: 80px; /* holdDetector.ts EXIT_CORNER_PX */
+  height: 80px;
+  background: radial-gradient(circle at 100% 0, var(--color-corner) 0 62%, transparent 63%);
+  pointer-events: none;
+}
+
+/* ---------- 움직임 줄이기 설정 ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .sprite__char,
+  .sprite__emoji {
+    animation-duration: 1ms;
+  }
+
+  .sprite--glyph .sprite__body {
+    animation-name: sprite-fade;
+  }
+
+  /* 별·하트도 퍼지지 않고 제자리에서 사라지게 */
+  .burst__particle {
+    --distance: 24px;
+  }
+
+  @keyframes sprite-fade {
+    80% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}

@@ -1,7 +1,13 @@
 :root {
+  /* 바탕: 따뜻한 크림색 + 아주 옅은 점무늬 */
   --color-bg: #fff4e6;
+  --color-bg-glow: #fffaf3;
+  --color-bg-blush: #ffe8ef;
   --color-text: #3b2f2a;
+  --color-dot: rgb(59 47 42 / 0.05);
+
   --font-display: 'Jua', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+  --font-ui: system-ui, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
 }
 
 * {
@@ -12,18 +18,34 @@ html,
 body {
   margin: 0;
   height: 100%;
-  background: var(--color-bg);
+  overflow: hidden;
   color: var(--color-text);
   font-family: var(--font-display);
+  /* 아이가 화면을 만질 때 확대·스크롤·선택·길게 누르기 메뉴가 생기지 않게 */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
 }
 
-#app {
-  display: grid;
-  place-items: center;
-  min-height: 100%;
+body {
+  background:
+    radial-gradient(var(--color-dot) 1.5px, transparent 1.6px) 0 0 / 28px 28px,
+    radial-gradient(circle at 18% 12%, var(--color-bg-glow) 0, transparent 45%),
+    radial-gradient(circle at 85% 88%, var(--color-bg-blush) 0, transparent 42%),
+    var(--color-bg);
 }
 
-.app-title {
-  font-size: clamp(2rem, 8vw, 5rem);
-  margin: 0;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
