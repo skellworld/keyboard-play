@@ -99,6 +99,51 @@ describe('createPlayController keyboard', () => {
   });
 });
 
+describe('createPlayController feedback', () => {
+  function setupWithFeedback() {
+    const stage = fakeStage();
+    const feedback = { glyph: vi.fn(), burst: vi.fn() };
+    const controller = createPlayController({
+      stage,
+      feedback,
+      getSettings: () => DEFAULT_SETTINGS,
+      now: () => 0,
+      viewport: () => ({ width: 1000, height: 800 }),
+    });
+    return { feedback, controller };
+  }
+
+  it('gives sound feedback for the same glyphs that appear on screen', () => {
+    const { feedback, controller } = setupWithFeedback();
+
+    controller.handleKeyDown(key('KeyR'));
+
+    expect(feedback.glyph).toHaveBeenCalledWith([
+      { glyph: { kind: 'jamo', char: 'ㄱ' }, info: { speech: '기역', emoji: '🐻' } },
+    ]);
+  });
+
+  it('gives burst feedback for decorations and touches', () => {
+    const { feedback, controller } = setupWithFeedback();
+
+    controller.handleKeyDown(key('Space'));
+    controller.handlePointerDown({ x: 300, y: 400 });
+
+    expect(feedback.burst).toHaveBeenCalledTimes(2);
+  });
+
+  it('gives no feedback for ignored or rate-limited input', () => {
+    const { feedback, controller } = setupWithFeedback();
+
+    controller.handleKeyDown(key('ShiftLeft', { shiftKey: true }));
+    for (let k = 0; k < 11; k += 1) {
+      controller.handleKeyDown(key('KeyR'));
+    }
+
+    expect(feedback.glyph).toHaveBeenCalledTimes(10);
+  });
+});
+
 describe('createPlayController touch', () => {
   it('spawns a burst where the screen was touched', () => {
     const { stage, controller } = setup();

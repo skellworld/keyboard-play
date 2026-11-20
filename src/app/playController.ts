@@ -1,3 +1,4 @@
+import type { Feedback } from '../audio/feedback';
 import { getGlyphInfo } from '../content/glyphs';
 import { isInExitCorner, type Point, type Viewport } from '../input/holdDetector';
 import {
@@ -16,6 +17,8 @@ export interface KeyInput extends KeyPress {
 
 export interface PlayControllerDeps {
   readonly stage: Pick<Stage, 'spawnGlyph' | 'spawnBurst'>;
+  /** 화면에 나온 것과 같은 반응에 효과음·읽어주기 (없으면 소리 없음) */
+  readonly feedback?: Pick<Feedback, 'glyph' | 'burst'>;
   readonly getSettings: () => Settings;
   /** performance.now()와 같은 시계 */
   readonly now: () => number;
@@ -48,9 +51,12 @@ export function createPlayController(deps: PlayControllerDeps): PlayController {
         return;
       }
       if (output.type === 'glyphs') {
-        deps.stage.spawnGlyph(output.glyphs.map((glyph) => ({ glyph, info: getGlyphInfo(glyph) })));
+        const items = output.glyphs.map((glyph) => ({ glyph, info: getGlyphInfo(glyph) }));
+        deps.stage.spawnGlyph(items);
+        deps.feedback?.glyph(items);
       } else {
         deps.stage.spawnBurst();
+        deps.feedback?.burst();
       }
     },
     handlePointerDown(point) {
@@ -59,6 +65,7 @@ export function createPlayController(deps: PlayControllerDeps): PlayController {
       }
       if (consume({ repeat: false })) {
         deps.stage.spawnBurst(point);
+        deps.feedback?.burst();
       }
     },
   };

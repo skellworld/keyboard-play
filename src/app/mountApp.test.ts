@@ -70,6 +70,31 @@ describe('mountApp', () => {
     expect(root.querySelector('.sprite__char')?.textContent).toBe('R');
   });
 
+  it('unlocks audio on the first input and gives feedback for it', () => {
+    const feedback = { glyph: vi.fn(), burst: vi.fn(), unlock: vi.fn(), dispose: vi.fn() };
+    cleanup = mountApp(root, { storage: null, feedback });
+
+    pressKey('KeyR');
+
+    expect(feedback.unlock).toHaveBeenCalled();
+    expect(feedback.glyph).toHaveBeenCalledTimes(1);
+  });
+
+  it('releases audio on cleanup', () => {
+    const feedback = { glyph: vi.fn(), burst: vi.fn(), unlock: vi.fn(), dispose: vi.fn() };
+    const stop = mountApp(root, { storage: null, feedback });
+
+    stop();
+
+    expect(feedback.dispose).toHaveBeenCalled();
+  });
+
+  it('works without audio support (no AudioContext or speechSynthesis in this test browser)', () => {
+    cleanup = mountApp(root, { storage: null });
+
+    expect(() => pressKey('KeyR')).not.toThrow();
+  });
+
   it('stops reacting after cleanup', () => {
     const stop = mountApp(root, { storage: null });
 

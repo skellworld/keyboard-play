@@ -1,3 +1,6 @@
+import { createFeedback, type Feedback } from '../audio/feedback';
+import { createSfx } from '../audio/sfx';
+import { createSpeaker } from '../audio/speech';
 import { createStage } from '../render/stage';
 import { getSafeStorage, loadSettings } from '../settings/settingsStore';
 import { createExitCornerMarker, createParentHint } from '../ui/hint';
@@ -10,6 +13,8 @@ export interface MountOptions {
   readonly storage?: Storage | null;
   readonly random?: () => number;
   readonly now?: () => number;
+  /** 테스트용. 생략하면 효과음·읽어주기를 실제로 만든다. */
+  readonly feedback?: Feedback;
 }
 
 function createTitle(): HTMLElement {
@@ -27,19 +32,28 @@ function windowViewport() {
 export function mountApp(root: HTMLElement, options: MountOptions = {}): () => void {
   const storage = options.storage === undefined ? getSafeStorage() : options.storage;
   const settings = loadSettings(storage);
+  const getSettings = () => settings;
   const stage = createStage({ random: options.random, viewport: windowViewport });
+  const feedback = options.feedback ?? createFeedback(createSfx(), createSpeaker(), getSettings);
   const controller = createPlayController({
     stage,
-    getSettings: () => settings,
+    feedback,
+    getSettings,
     now: options.now ?? (() => performance.now()),
     viewport: windowViewport,
   });
 
   root.replaceChildren(createTitle(), createParentHint(), stage.element, createExitCornerMarker());
 
-  const onKeyDown = (event: KeyboardEvent): void => controller.handleKeyDown(event);
-  const onPointerDown = (event: PointerEvent): void =>
+  // 브라우저는 사용자 동작 안에서만 소리를 허용하므로, 입력마다 오디오 잠금 해제를 시도한다 (한 번 풀리면 무시됨).
+  const onKeyDown = (event: KeyboardEvent): void => {
+    feedback.unlock();
+    controller.handleKeyDown(event);
+  };
+  const onPointerDown = (event: PointerEvent): void => {
+    feedback.unlock();
     controller.handlePointerDown({ x: event.clientX, y: event.clientY });
+  };
 
   window.addEventListener('keydown', onKeyDown);
   stage.element.addEventListener('pointerdown', onPointerDown);
@@ -48,5 +62,6 @@ export function mountApp(root: HTMLElement, options: MountOptions = {}): () => v
     window.removeEventListener('keydown', onKeyDown);
     stage.element.removeEventListener('pointerdown', onPointerDown);
     stage.destroy();
+    feedback.dispose();
   };
 }
