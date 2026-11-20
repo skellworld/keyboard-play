@@ -114,6 +114,14 @@ kids-keyboard/
 6. **시계 통일**: `acceptInput`·`updateHold`·`reduceApp`의 `now`는 모두 `performance.now()`.
 7. **`localStorage`는 `getSafeStorage()`로만 접근.**
 
+#### 6단계 진행 (2026-11-21)
+- PWA: vite-plugin-pwa(서비스 워커·manifest, `display: fullscreen`), 앱 전체 29개 파일(463KB, 글꼴 포함) 미리 저장 → 오프라인 실행 E2E로 확인
+- 새 버전은 다음 실행 때 적용 (놀이 도중 새로고침되어 전체화면이 풀리지 않게)
+- 아이콘: `scripts/generate-icons.mjs`가 SVG 하나로 PNG(192·512·maskable 512·apple 180)를 Chrome으로 그림
+- 배포: `.github/workflows/deploy.yml` — 검사·E2E 통과 시 저장소 이름 경로(`BASE_PATH`)로 빌드해 Pages 배포
+- 알려진 사항: `npm audit` 보통(moderate) 4건은 workbox-build가 쓰는 glob/minimatch(빌드할 때만 실행, 앱에는 포함 안 됨). 플러그인 업데이트 때 다시 확인
+- 남은 것: 사용자가 저장소 생성 → Pages 소스를 GitHub Actions로 → 원격 연결·push (사용자 확인 후)
+
 #### 5단계 완료 (2026-11-21)
 - 시작 화면 → 잠금(전체화면·키보드 잠금·화면 꺼짐 방지) → 놀이 → 3초 누르기 → 확인 → 부모 메뉴(설정 즉시 반영) → 다시 놀기, 전체화면 이탈 시 일시정지
 - 통합 규칙 1~7 모두 연결. 단위 테스트 338개, E2E 12개

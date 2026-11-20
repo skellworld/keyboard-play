@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff9a52"/>
+      <stop offset="1" stop-color="#ff7a2f"/>
+    </linearGradient>
+    <radialGradient id="blush" cx="0.82" cy="0.86" r="0.45">
+      <stop offset="0" stop-color="#ffe3ec"/>
+      <stop offset="1" stop-color="#ffe3ec" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#fff4e6"/>
+  <rect width="512" height="512" rx="112" fill="url(#blush)"/>
+  <circle cx="132" cy="134" r="14" fill="#2f80ed"/>
+  <circle cx="382" cy="130" r="12" fill="#1f9d55"/>
+  <circle cx="390" cy="388" r="16" fill="#e84393"/>
+  <circle cx="124" cy="384" r="12" fill="#8e44ad"/>
+  <rect x="136" y="178" width="240" height="196" rx="48" fill="#e0601c"/>
+  <rect x="136" y="150" width="240" height="196" rx="48" fill="url(#cap)"/>
+  <polygon fill="#ffffff" points="256,186 272,226 315,229 282,256 293,298 256,275 219,298 230,256 197,229 240,226"/>
+</svg>

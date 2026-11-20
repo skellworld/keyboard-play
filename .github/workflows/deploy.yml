@@ -1,0 +1,65 @@
+# main에 push하면: 검사(타입·린트·포맷·단위 테스트) → E2E → GitHub Pages용 빌드 → 배포
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck, lint, format, unit tests (coverage >= 80%)
+        run: npm run check
+
+      # GitHub 러너에 설치된 Chrome을 사용한다 (playwright.config.ts의 channel: 'chrome').
+      - name: End-to-end tests
+        run: npm run e2e
+
+      # 저장소 페이지는 /<저장소 이름>/ 아래에서 열린다. <사용자>.github.io 저장소면 루트(/).
+      - name: Build for GitHub Pages
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          if [[ "$REPO_NAME" == *.github.io ]]; then
+            export BASE_PATH=/
+          else
+            export BASE_PATH="/$REPO_NAME/"
+          fi
+          npm run build
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

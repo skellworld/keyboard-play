@@ -17,4 +17,22 @@ npm run dev:lan    # 같은 와이파이의 태블릿에서 접속
 npm run check      # 타입 검사 + 린트 + 포맷 검사 + 테스트(커버리지 80%)
 npm run e2e        # Playwright (설치된 Chrome 사용)
 npm run build
+npm run icons      # 앱 아이콘 다시 만들기 (scripts/generate-icons.mjs)
 ```
+
+## 배포 (GitHub Pages)
+
+`main` 브랜치에 push하면 [deploy.yml](.github/workflows/deploy.yml)이 검사 → E2E → 빌드 → 배포를 한다.
+주소는 `https://<사용자>.github.io/<저장소>/`.
+
+처음 한 번만:
+
+1. GitHub에서 **공개(public)** 저장소를 만든다 (무료 계정은 공개 저장소만 Pages 사용 가능).
+2. 저장소 **Settings → Pages → Build and deployment → Source**를 **GitHub Actions**로 바꾼다.
+3. 로컬 저장소에 원격을 연결하고 push한다.
+
+## 태블릿·PC에서 쓰기
+
+- 배포 주소를 Chrome으로 한 번 연다 → 메뉴의 **홈 화면에 추가**(설치) → 이후에는 인터넷 없이도 열린다.
+- 안드로이드는 **앱 고정**을 켜 두면 아이가 홈·최근 앱 버튼으로도 나가지 못한다.
+- 나가기: 오른쪽 위 모서리 또는 Ctrl + Alt + P를 3초 → "나가기" 버튼.
