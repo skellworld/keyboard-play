@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>키 입력 측정</title>
+<style>
+  :root {
+    --color-bg: #fff8ef;
+    --color-surface: #ffffff;
+    --color-text: #2a2420;
+    --color-muted: #8a7d72;
+    --color-line: #efe2d2;
+    --color-accent: #ff7a2f;
+    --color-accent-soft: #ffe6d6;
+    --color-ok: #23935a;
+    --color-bad: #d23f3f;
+    --font-ui: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --radius: 14px;
+    --space: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-ui);
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    overscroll-behavior: none;
+  }
+  main { max-width: 1120px; margin: 0 auto; padding: 16px; display: grid; gap: var(--space); }
+  header h1 { font-size: 22px; margin: 0 0 4px; }
+  header p { margin: 0; color: var(--color-muted); font-size: 14px; line-height: 1.5; }
+  section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius);
+    padding: var(--space);
+  }
+  h2 { font-size: 15px; margin: 0 0 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button {
+    font: inherit; font-size: 15px;
+    padding: 10px 14px; border-radius: 10px;
+    border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-text);
+    cursor: pointer;
+  }
+  button:active { transform: translateY(1px); }
+  button.primary { background: var(--color-accent); border-color: var(--color-accent); color: #fff; font-weight: 600; }
+  button.selected { background: var(--color-accent-soft); border-color: var(--color-accent); font-weight: 600; }
+  .status { font-size: 14px; min-height: 20px; }
+  .ok { color: var(--color-ok); }
+  .bad { color: var(--color-bad); }
+  .muted { color: var(--color-muted); font-size: 13px; }
+  .hero { display: grid; grid-template-columns: 2fr 3fr; gap: var(--space); align-items: center; }
+  .last-key { font-size: 64px; font-weight: 800; text-align: center; line-height: 1.1; min-height: 80px; }
+  .last-code { text-align: center; font-family: var(--font-mono); color: var(--color-muted); }
+  .counters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .counter { background: var(--color-bg); border-radius: 10px; padding: 8px; text-align: center; }
+  .counter b { display: block; font-size: 24px; }
+  .counter span { font-size: 12px; color: var(--color-muted); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space); }
+  pre { margin: 0; font-family: var(--font-mono); font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+  table { border-collapse: collapse; width: 100%; font-family: var(--font-mono); font-size: 12px; }
+  th, td { border-bottom: 1px solid var(--color-line); padding: 3px 6px; text-align: left; white-space: nowrap; }
+  .scroll { max-height: 320px; overflow: auto; }
+  tr.chatter td { background: var(--color-accent-soft); }
+  tr.meta td { color: var(--color-muted); font-style: italic; }
+  .chord-keys { display: flex; gap: 8px; font-size: 20px; font-weight: 700; }
+  .chord-keys span { padding: 6px 12px; border-radius: 8px; background: var(--color-bg); }
+  .chord-keys span.on { background: var(--color-ok); color: #fff; }
+  ol { margin: 6px 0 0; padding-left: 20px; line-height: 1.6; font-size: 14px; }
+  @media (max-width: 640px) { .hero { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>키 입력 측정 (스파이크)</h1>
+    <p>고장난 키보드의 실제 입력 패턴을 기록합니다. 화면을 한 번 탭(클릭)한 뒤 키를 누르세요. 입력창이 없으므로 화상 키보드는 뜨지 않습니다.</p>
+  </header>
+
+  <section aria-labelledby="h-setup">
+    <h2 id="h-setup">1. 기기 선택 · 도구</h2>
+    <div class="row">
+      <button type="button" data-label="pc">PC</button>
+      <button type="button" data-label="tablet">태블릿</button>
+      <span class="muted">│</span>
+      <button type="button" id="btn-lock">전체화면 + 키 잠금</button>
+      <button type="button" id="btn-speech">음성 테스트</button>
+      <button type="button" id="btn-block">브라우저 기본 동작 막기: 켜짐</button>
+      <span class="muted">│</span>
+      <button type="button" class="primary" id="btn-upload">결과 보내기</button>
+      <button type="button" id="btn-csv">CSV 내려받기</button>
+      <button type="button" id="btn-clear">기록 지우기</button>
+    </div>
+    <p class="status" id="status" role="status"></p>
+  </section>
+
+  <section aria-labelledby="h-live">
+    <h2 id="h-live">2. 자유롭게 누르기</h2>
+    <div class="hero">
+      <div>
+        <div class="last-key" id="last-key">?</div>
+        <div class="last-code" id="last-code">아직 입력 없음</div>
+      </div>
+      <div class="counters">
+        <div class="counter"><b id="c-downs">0</b><span>키 누름 (자동반복 제외)</span></div>
+        <div class="counter"><b id="c-chatter">0</b><span>같은 키 120ms 안 재입력</span></div>
+        <div class="counter"><b id="c-repeat">0</b><span>자동반복 (꾹 누름)</span></div>
+        <div class="counter"><b id="c-noup">0</b><span>떼지 않고 또 눌림</span></div>
+        <div class="counter"><b id="c-blur">0</b><span>창 포커스 잃음</span></div>
+        <div class="counter"><b id="c-events">0</b><span>전체 이벤트</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid2">
+    <section aria-labelledby="h-hist">
+      <h2 id="h-hist">간격 분포</h2>
+      <pre id="hist"></pre>
+    </section>
+    <section aria-labelledby="h-perkey">
+      <h2 id="h-perkey">키별 통계 (재입력 많은 순)</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>code</th><th>누름</th><th>&lt;120ms</th><th>최소 간격</th><th>떼지 않고 또</th></tr></thead>
+          <tbody id="perkey"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <section aria-labelledby="h-chord">
+    <h2 id="h-chord">3. Ctrl + Alt + P 3초 누르기 테스트</h2>
+    <div class="row">
+      <button type="button" id="btn-chord">테스트 시작</button>
+      <div class="chord-keys"><span id="k-ctrl">Ctrl</span><span id="k-alt">Alt</span><span id="k-p">P</span></div>
+    </div>
+    <p class="muted">시작을 누른 뒤 왼쪽 Ctrl + 왼쪽 Alt + P를 3~5초 누르고 떼세요. 3번 정도 반복한 뒤 "테스트 종료"를 누르세요. 아래 표는 "중간에 끊긴 시간을 얼마까지 봐줄 때" 최장 연속 유지 시간입니다.</p>
+    <pre id="chord"></pre>
+  </section>
+
+  <section aria-labelledby="h-system">
+    <h2 id="h-system">4. 시스템 키 테스트 (전체화면에서)</h2>
+    <ol>
+      <li>"전체화면 + 키 잠금"을 누릅니다.</li>
+      <li>Esc를 <b>짧게</b> 한 번 → 전체화면이 유지되는지</li>
+      <li>Alt+Tab, Win 키(PC) / 홈·최근 앱·뒤로 키(태블릿 키보드)를 눌러 봅니다.</li>
+      <li>Esc를 <b>2초 이상 길게</b> → 전체화면이 풀리는지</li>
+    </ol>
+    <p class="muted">키가 막혔는지, 창 포커스를 잃었는지(blur)는 아래 이벤트 기록에 자동으로 남습니다.</p>
+  </section>
+
+  <div class="grid2">
+    <section aria-labelledby="h-env">
+      <h2 id="h-env">환경 정보</h2>
+      <pre id="env"></pre>
+    </section>
+    <section aria-labelledby="h-voices">
+      <h2 id="h-voices">음성(TTS) 목록</h2>
+      <div class="scroll"><pre id="voices"></pre></div>
+    </section>
+  </div>
+
+  <section aria-labelledby="h-log">
+    <h2 id="h-log">최근 이벤트 (최신순 200개, 주황 = 120ms 안 재입력)</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>#</th><th>종류</th><th>code</th><th>key</th><th>repeat</th><th>수식키</th><th>t(ms)</th><th>직전 누름부터</th><th>직전 뗌부터</th><th>누른 시간</th></tr></thead>
+        <tbody id="log"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+'use strict';
+
+const MAX_EVENTS = 50000;
+const LOG_ROWS = 200;
+const CHATTER_MS = 120;
+const CHORD_TARGET_MS = 3000;
+const GAP_BUCKETS = [20, 40, 60, 80, 100, 120, 150, 200, 300, 500];
+const HOLD_BUCKETS = [10, 20, 40, 60, 100, 150, 250, 500, 1000];
+const GRACES = [0, 100, 200, 300, 500, 800];
+const SPEECH_SAMPLES = ['기역', '에이', '일'];
+
+const state = {
+  label: null,
+  blockDefault: true,
+  events: [],
+  truncated: false,
+  lastDown: new Map(),
+  lastUp: new Map(),
+  downAt: new Map(),
+  lastShown: null,
+  lockResult: null,
+  speechResult: null,
+  chord: null,
+  chordTests: [],
+  voices: [],
+  startedAt: new Date().toISOString(),
+};
+
+const $ = (id) => document.getElementById(id);
+const round1 = (n) => Math.round(n * 10) / 10;
+
+// ---------- 기록 ----------
+function pushEvent(ev) {
+  if (state.events.length >= MAX_EVENTS) {
+    state.truncated = true;
+    return;
+  }
+  state.events.push(ev);
+}
+
+function baseEvent(type, t) {
+  return {
+    i: state.events.length, type, code: null, key: null, keyCode: null, repeat: false,
+    ctrl: false, alt: false, shift: false, meta: false, t: round1(t),
+    sinceDown: null, sinceUp: null, holdMs: null, wasHeld: false,
+  };
+}
+
+function recordKey(e) {
+  const t = e.timeStamp;
+  const code = e.code || `(빈 code:${e.key})`;
+  const ev = {
+    ...baseEvent(e.type === 'keydown' ? 'down' : 'up', t),
+    code, key: e.key, keyCode: e.keyCode, repeat: e.repeat,
+    ctrl: e.ctrlKey, alt: e.altKey, shift: e.shiftKey, meta: e.metaKey,
+  };
+  if (ev.type === 'down') {
+    if (state.lastDown.has(code)) ev.sinceDown = round1(t - state.lastDown.get(code));
+    if (state.lastUp.has(code)) ev.sinceUp = round1(t - state.lastUp.get(code));
+    ev.wasHeld = state.downAt.has(code);
+    if (!e.repeat) state.lastDown.set(code, t);
+    if (!state.downAt.has(code)) state.downAt.set(code, t);
+  } else {
+    if (state.downAt.has(code)) ev.holdMs = round1(t - state.downAt.get(code));
+    state.downAt.delete(code);
+    state.lastUp.set(code, t);
+  }
+  pushEvent(ev);
+  return ev;
+}
+
+function recordMeta(kind, detail = '') {
+  pushEvent({ ...baseEvent('meta', performance.now()), code: kind, key: String(detail) });
+}
+
+// ---------- Ctrl+Alt+P 유지 판정 ----------
+function chordHeld() {
+  const has = (c) => state.downAt.has(c);
+  return (has('ControlLeft') || has('ControlRight')) && (has('AltLeft') || has('AltRight')) && has('KeyP');
+}
+
+function updateChord(now) {
+  const c = state.chord;
+  if (!c) return;
+  const held = chordHeld();
+  if (held && c.openSince === null) c.openSince = now;
+  if (!held && c.openSince !== null) {
+    c.intervals.push([c.openSince, now]);
+    c.openSince = null;
+  }
+}
+
+function chordIntervals(c, now) {
+  return c.openSince === null ? c.intervals : [...c.intervals, [c.openSince, now]];
+}
+
+function longestWithGrace(intervals, grace) {
+  let best = 0;
+  let start = null;
+  let end = null;
+  for (const [s, e] of intervals) {
+    if (start === null) { start = s; end = e; continue; }
+    if (s - end <= grace) { end = Math.max(end, e); continue; }
+    best = Math.max(best, end - start);
+    start = s; end = e;
+  }
+  if (start !== null) best = Math.max(best, end - start);
+  return best;
+}
+
+function gapsOf(intervals) {
+  const gaps = [];
+  for (let k = 1; k < intervals.length; k++) gaps.push(round1(intervals[k][0] - intervals[k - 1][1]));
+  return gaps;
+}
+
+function chordReport(intervals) {
+  return {
+    segments: intervals.length,
+    gapsMs: gapsOf(intervals),
+    longestByGrace: Object.fromEntries(GRACES.map((g) => [g, round1(longestWithGrace(intervals, g))])),
+  };
+}
+
+function toggleChord() {
+  const now = performance.now();
+  if (!state.chord) {
+    state.chord = { startedAt: now, intervals: [], openSince: null };
+    updateChord(now);
+    recordMeta('chord-test', 'start');
+    setStatus('Ctrl+Alt+P 테스트 중… 3초 이상 누르고 떼기를 몇 번 반복하세요');
+    return;
+  }
+  updateChord(now);
+  const report = { durationMs: round1(now - state.chord.startedAt), ...chordReport(chordIntervals(state.chord, now)) };
+  state.chordTests.push(report);
+  state.chord = null;
+  recordMeta('chord-test', 'stop');
+  setStatus(`Ctrl+Alt+P 테스트 ${state.chordTests.length}회차 저장`, 'ok');
+}
+
+// ---------- 요약 ----------
+function bucketize(values, bounds) {
+  const counts = new Array(bounds.length + 1).fill(0);
+  for (const v of values) {
+    const k = bounds.findIndex((b) => v < b);
+    counts[k === -1 ? bounds.length : k] += 1;
+  }
+  return { bounds, counts };
+}
+
+function computeSummary() {
+  const downs = state.events.filter((e) => e.type === 'down');
+  const fresh = downs.filter((e) => !e.repeat);
+  const downToDown = fresh.filter((e) => e.sinceDown !== null).map((e) => e.sinceDown);
+  const upToDown = fresh.filter((e) => e.sinceUp !== null && !e.wasHeld).map((e) => e.sinceUp);
+  const holds = state.events.filter((e) => e.type === 'up' && e.holdMs !== null).map((e) => e.holdMs);
+  const perKey = {};
+  for (const e of fresh) {
+    const k = perKey[e.code] ?? { downs: 0, under120: 0, minSinceDown: null, downWithoutUp: 0 };
+    k.downs += 1;
+    if (e.sinceDown !== null) {
+      if (e.sinceDown < CHATTER_MS) k.under120 += 1;
+      k.minSinceDown = k.minSinceDown === null ? e.sinceDown : Math.min(k.minSinceDown, e.sinceDown);
+    }
+    if (e.wasHeld) k.downWithoutUp += 1;
+    perKey[e.code] = k;
+  }
+  return {
+    totals: {
+      events: state.events.length,
+      downs: downs.length,
+      autoRepeat: downs.length - fresh.length,
+      freshDowns: fresh.length,
+      under120: downToDown.filter((v) => v < CHATTER_MS).length,
+      downWithoutUp: fresh.filter((e) => e.wasHeld).length,
+      blur: state.events.filter((e) => e.type === 'meta' && e.code === 'blur').length,
+    },
+    histograms: {
+      downToDown: bucketize(downToDown, GAP_BUCKETS),
+      upToDown: bucketize(upToDown, GAP_BUCKETS),
+      hold: bucketize(holds, HOLD_BUCKETS),
+    },
+    perKey,
+  };
+}
+
+// ---------- 환경 ----------
+function envInfo() {
+  return {
+    userAgent: navigator.userAgent,
+    platform: navigator.userAgentData?.platform ?? navigator.platform,
+    isSecureContext: window.isSecureContext,
+    fullscreenApi: typeof document.documentElement.requestFullscreen === 'function',
+    keyboardLockApi: typeof navigator.keyboard?.lock === 'function',
+    wakeLockApi: 'wakeLock' in navigator,
+    speechApi: 'speechSynthesis' in window,
+    screen: `${screen.width}x${screen.height} @${window.devicePixelRatio}`,
+    touchPoints: navigator.maxTouchPoints,
+  };
+}
+
+function loadVoices() {
+  if (!('speechSynthesis' in window)) return;
+  state.voices = speechSynthesis.getVoices().map((v) => ({
+    name: v.name, lang: v.lang, localService: v.localService, default: v.default,
+  }));
+  scheduleRender();
+}
+
+async function enterLock() {
+  const result = { fullscreen: null, keyboardLock: null, wakeLock: null };
+  try {
+    await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+    result.fullscreen = 'ok';
+  } catch (err) {
+    result.fullscreen = `실패: ${err.message}`;
+  }
+  if (typeof navigator.keyboard?.lock === 'function') {
+    try { await navigator.keyboard.lock(); result.keyboardLock = 'ok'; }
+    catch (err) { result.keyboardLock = `실패: ${err.message}`; }
+  } else {
+    result.keyboardLock = '미지원';
+  }
+  if ('wakeLock' in navigator) {
+    try { await navigator.wakeLock.request('screen'); result.wakeLock = 'ok'; }
+    catch (err) { result.wakeLock = `실패: ${err.message}`; }
+  } else {
+    result.wakeLock = '미지원 (HTTPS 필요할 수 있음)';
+  }
+  state.lockResult = result;
+  recordMeta('lock', JSON.stringify(result));
+  setStatus(`전체화면 ${result.fullscreen} · 키 잠금 ${result.keyboardLock} · 화면 꺼짐 방지 ${result.wakeLock}`);
+}
+
+function testSpeech() {
+  if (!('speechSynthesis' in window)) {
+    state.speechResult = '미지원';
+    setStatus('이 브라우저는 음성 읽기를 지원하지 않습니다', 'bad');
+    return;
+  }
+  const ko = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith('ko'));
+  state.speechResult = ko ? `ko 음성: ${ko.name}` : 'ko 음성 없음';
+  speechSynthesis.cancel();
+  for (const word of SPEECH_SAMPLES) {
+    const u = new SpeechSynthesisUtterance(word);
+    u.lang = 'ko-KR';
+    if (ko) u.voice = ko;
+    speechSynthesis.speak(u);
+  }
+  setStatus(`음성 테스트: "${SPEECH_SAMPLES.join(', ')}" 읽기 (${state.speechResult}). 들리면 정상입니다.`, ko ? 'ok' : 'bad');
+}
+
+// ---------- 내보내기 ----------
+function buildPayload() {
+  return {
+    label: state.label,
+    startedAt: state.startedAt,
+    sentAt: new Date().toISOString(),
+    env: envInfo(),
+    voices: state.voices,
+    lockResult: state.lockResult,
+    speechResult: state.speechResult,
+    summary: computeSummary(),
+    chordTests: state.chordTests,
+    truncated: state.truncated,
+    events: state.events,
+  };
+}
+
+async function upload() {
+  if (!state.label) {
+    setStatus('먼저 위에서 기기(PC / 태블릿)를 선택하세요', 'bad');
+    return;
+  }
+  if (state.chord) toggleChord();
+  setStatus('보내는 중…');
+  try {
+    const res = await fetch('upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buildPayload()),
+    });
+    const body = await res.json();
+    if (!res.ok || !body.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    setStatus(`보내기 완료: ${body.file}`, 'ok');
+  } catch (err) {
+    setStatus(`보내기 실패: ${err.message} — "CSV 내려받기"를 대신 사용하세요`, 'bad');
+  }
+}
+
+function csvCell(v) {
+  const s = v === null || v === undefined ? '' : String(v);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function downloadCsv() {
+  const cols = ['i', 'type', 'code', 'key', 'keyCode', 'repeat', 'ctrl', 'alt', 'shift', 'meta', 't', 'sinceDown', 'sinceUp', 'holdMs', 'wasHeld'];
+  const lines = [cols.join(','), ...state.events.map((e) => cols.map((c) => csvCell(e[c])).join(','))];
+  const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `keylog-${state.label ?? 'device'}-${Date.now()}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function clearAll() {
+  Object.assign(state, {
+    events: [], truncated: false, lastDown: new Map(), lastUp: new Map(), downAt: new Map(),
+    lastShown: null, chord: null, chordTests: [], startedAt: new Date().toISOString(),
+  });
+  setStatus('기록을 지웠습니다');
+}
+
+// ---------- 화면 ----------
+function setStatus(text, tone = '') {
+  const el = $('status');
+  el.textContent = text;
+  el.className = `status ${tone}`;
+  scheduleRender();
+}
+
+function histText(title, h) {
+  const max = Math.max(1, ...h.counts);
+  const labels = h.bounds.map((b, k) => `${k === 0 ? 0 : h.bounds[k - 1]}–${b}`).concat(`${h.bounds.at(-1)}+`);
+  const rows = labels.map((l, k) => `${l.padStart(9)}ms │${'█'.repeat(Math.round((h.counts[k] / max) * 28))} ${h.counts[k]}`);
+  return `${title}\n${rows.join('\n')}`;
+}
+
+function cell(text) {
+  const td = document.createElement('td');
+  td.textContent = text ?? '';
+  return td;
+}
+
+function renderPerKey(perKey) {
+  const rows = Object.entries(perKey).sort((a, b) => b[1].under120 - a[1].under120 || b[1].downs - a[1].downs);
+  $('perkey').replaceChildren(...rows.map(([code, k]) => {
+    const tr = document.createElement('tr');
+    tr.append(cell(code), cell(k.downs), cell(k.under120), cell(k.minSinceDown ?? '-'), cell(k.downWithoutUp));
+    return tr;
+  }));
+}
+
+function modifiers(e) {
+  return [e.ctrl && 'C', e.alt && 'A', e.shift && 'S', e.meta && 'M'].filter(Boolean).join('');
+}
+
+function renderLog() {
+  const recent = state.events.slice(-LOG_ROWS).reverse();
+  $('log').replaceChildren(...recent.map((e) => {
+    const tr = document.createElement('tr');
+    if (e.type === 'meta') tr.className = 'meta';
+    else if (e.type === 'down' && !e.repeat && e.sinceDown !== null && e.sinceDown < CHATTER_MS) tr.className = 'chatter';
+    tr.append(
+      cell(e.i), cell(e.type), cell(e.code), cell(e.key), cell(e.repeat ? 'Y' : ''), cell(modifiers(e)),
+      cell(e.t), cell(e.sinceDown), cell(e.sinceUp), cell(e.holdMs),
+    );
+    return tr;
+  }));
+}
+
+function renderChord() {
+  const has = (c) => state.downAt.has(c);
+  $('k-ctrl').classList.toggle('on', has('ControlLeft') || has('ControlRight'));
+  $('k-alt').classList.toggle('on', has('AltLeft') || has('AltRight'));
+  $('k-p').classList.toggle('on', has('KeyP'));
+  $('btn-chord').textContent = state.chord ? '테스트 종료' : '테스트 시작';
+  const lines = [];
+  if (state.chord) {
+    const now = performance.now();
+    const r = chordReport(chordIntervals(state.chord, now));
+    lines.push(`진행 중 · 끊긴 횟수 ${Math.max(0, r.segments - 1)}`);
+    lines.push(...GRACES.map((g) => `  봐주는 시간 ${String(g).padStart(3)}ms → 최장 ${(r.longestByGrace[g] / 1000).toFixed(2)}초 ${r.longestByGrace[g] >= CHORD_TARGET_MS ? '✅' : ''}`));
+  }
+  state.chordTests.forEach((t, n) => {
+    const best = GRACES.map((g) => `${g}ms:${(t.longestByGrace[g] / 1000).toFixed(1)}s`).join('  ');
+    lines.push(`${n + 1}회차 · 끊김 ${Math.max(0, t.segments - 1)}회 · 끊긴 길이 [${t.gapsMs.join(', ')}]ms\n  ${best}`);
+  });
+  $('chord').textContent = lines.join('\n') || '아직 테스트 안 함';
+}
+
+let renderQueued = false;
+function scheduleRender() {
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(() => { renderQueued = false; render(); });
+}
+
+function render() {
+  const s = computeSummary();
+  if (state.lastShown) {
+    $('last-key').textContent = state.lastShown.key === ' ' ? '␣' : state.lastShown.key;
+    $('last-code').textContent = `${state.lastShown.code} · keyCode ${state.lastShown.keyCode}`;
+  }
+  $('c-downs').textContent = s.totals.freshDowns;
+  $('c-chatter').textContent = s.totals.under120;
+  $('c-repeat').textContent = s.totals.autoRepeat;
+  $('c-noup').textContent = s.totals.downWithoutUp;
+  $('c-blur').textContent = s.totals.blur;
+  $('c-events').textContent = s.totals.events + (state.truncated ? ' (가득 참)' : '');
+  $('hist').textContent = [
+    histText('같은 키: 누름 → 다시 누름', s.histograms.downToDown),
+    histText('같은 키: 뗌 → 다시 누름 (채터링은 아주 짧게 나옴)', s.histograms.upToDown),
+    histText('누르고 있던 시간', s.histograms.hold),
+  ].join('\n\n');
+  renderPerKey(s.perKey);
+  renderLog();
+  renderChord();
+  $('env').textContent = JSON.stringify({ ...envInfo(), lock: state.lockResult, speech: state.speechResult }, null, 1);
+  const ko = state.voices.filter((v) => v.lang.toLowerCase().startsWith('ko'));
+  $('voices').textContent = state.voices.length
+    ? `한국어 음성 ${ko.length}개\n` + state.voices.map((v) => `${v.lang.padEnd(7)} ${v.name}${v.localService ? '' : ' (온라인)'}`).join('\n')
+    : '음성 목록 없음 (아직 로딩 중이거나 미지원)';
+  if (state.chord) scheduleRender();
+}
+
+// ---------- 이벤트 연결 ----------
+function onKey(e) {
+  if (state.blockDefault) e.preventDefault();
+  const ev = recordKey(e);
+  updateChord(e.timeStamp);
+  if (ev.type === 'down' && !ev.repeat) state.lastShown = ev;
+  scheduleRender();
+}
+
+window.addEventListener('keydown', onKey, { capture: true });
+window.addEventListener('keyup', onKey, { capture: true });
+window.addEventListener('blur', () => {
+  recordMeta('blur');
+  state.downAt.clear();
+  updateChord(performance.now());
+  scheduleRender();
+});
+window.addEventListener('focus', () => { recordMeta('focus'); scheduleRender(); });
+document.addEventListener('visibilitychange', () => { recordMeta('visibility', document.visibilityState); scheduleRender(); });
+document.addEventListener('fullscreenchange', () => {
+  recordMeta('fullscreen', document.fullscreenElement ? 'enter' : 'exit');
+  scheduleRender();
+});
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+function onClick(id, handler) {
+  $(id).addEventListener('click', (e) => { e.currentTarget.blur(); handler(); });
+}
+
+function selectLabel(label) {
+  state.label = label;
+  document.querySelectorAll('[data-label]').forEach((b) => b.classList.toggle('selected', b.dataset.label === label));
+}
+
+document.querySelectorAll('[data-label]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    btn.blur();
+    selectLabel(btn.dataset.label);
+    setStatus(`기기: ${btn.textContent}`, 'ok');
+  });
+});
+// 기기를 고르지 않아 전송이 막히는 일이 없도록 접속 기기로 미리 선택해 둔다 (버튼으로 바꿀 수 있음).
+selectLabel(/Android/i.test(navigator.userAgent) ? 'tablet' : 'pc');
+onClick('btn-lock', enterLock);
+onClick('btn-speech', testSpeech);
+onClick('btn-block', () => {
+  state.blockDefault = !state.blockDefault;
+  $('btn-block').textContent = `브라우저 기본 동작 막기: ${state.blockDefault ? '켜짐' : '꺼짐'}`;
+});
+onClick('btn-upload', upload);
+onClick('btn-csv', downloadCsv);
+onClick('btn-clear', clearAll);
+onClick('btn-chord', toggleChord);
+
+if ('speechSynthesis' in window) {
+  loadVoices();
+  speechSynthesis.addEventListener('voiceschanged', loadVoices);
+}
+render();
+</script>
+</body>
+</html>

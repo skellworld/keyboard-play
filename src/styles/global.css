@@ -1,0 +1,29 @@
+:root {
+  --color-bg: #fff4e6;
+  --color-text: #3b2f2a;
+  --font-display: 'Jua', 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-display);
+}
+
+#app {
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+}
+
+.app-title {
+  font-size: clamp(2rem, 8vw, 5rem);
+  margin: 0;
+}

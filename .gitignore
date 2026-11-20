@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.vite/
+*.log
+.DS_Store
+
+# 스파이크 측정 원본: 기기 정보(userAgent 등)가 들어 있어 커밋하지 않는다.
+spike/results/
